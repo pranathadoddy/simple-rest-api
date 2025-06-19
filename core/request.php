@@ -15,4 +15,8 @@ class Request {
         return $this->body;
     }
 
+    public function getQueryParams() {
+        return $this->queryParams;
+    }
+
 }

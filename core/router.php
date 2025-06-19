@@ -29,8 +29,26 @@
             $path = parse_url($uri, PHP_URL_PATH);
 
             foreach ($this->routes as $route) {
-               if(matchRoute($route, $path, $method)) {
+               if($this->matchRoute($route, $path, $method)) {
                     $params = $this->getParams($route, $path);
+
+                    $request = new Request($params);
+                    $response = new Response();
+
+                    try {
+                        [$controllerName, $handlerName] =$route['callback'];
+
+                        $controller = new $controllerName();
+                        if(method_exists($controller, $handlerName)) {
+                            return $controller->$handlerName($request, $response);
+                        } else {
+                            $response->send(404, ['message' => 'Handler not found']);
+                            return $response;
+                        }
+                    } catch (Exception $e) {
+                        $response->send(500, ['message' => 'Internal Server Error']);
+                        return $response;
+                    }
                     
                 }
             }
@@ -49,7 +67,7 @@
 
                 #^localhost/student/([^/]+)$# 
             */
-            $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $matches);
+            $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $routePath);
 
             $pattern = '#^' . $pattern . '$#';
 
@@ -58,7 +76,7 @@
 
         public function getParams($route, $path): array {
             $params = [];
-            preg_match_all('/\{([^}]+)\}/', '([^/]+)', $route['path'], $paramNames);
+            preg_match_all('/\{([^}]+)\}/', $route['path'], $paramNames);
             $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $route['path']);
             $pattern = '#^' . $pattern . '$#';
             preg_match($pattern, $path, $matches);
