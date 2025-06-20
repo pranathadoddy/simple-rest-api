@@ -36,9 +36,9 @@
                     $response = new Response();
 
                     try {
-                        [$controllerName, $handlerName] =$route['callback'];
+                        [$controllerName, $handlerName, $storage] =$route['callback'];
 
-                        $controller = new $controllerName();
+                        $controller = new $controllerName($storage);
                         if(method_exists($controller, $handlerName)) {
                             return $controller->$handlerName($request, $response);
                         } else {
